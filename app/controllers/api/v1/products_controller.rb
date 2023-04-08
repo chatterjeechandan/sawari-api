@@ -5,8 +5,12 @@ class Api::V1::ProductsController < ApplicationController
   end
 
   def show
-    product = Product.find(params[:id])
-    render json: product, status: :ok
+    begin
+      product = Product.find(params[:id])
+      render json: product, status: :ok
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Product not found" }, status: :not_found
+    end
   end
 
   def create
@@ -19,9 +23,19 @@ class Api::V1::ProductsController < ApplicationController
     end
   end
 
-  private
+  def destroy
+    product = Product.find(params[:id])
+    if product.destroy
+      head :no_content
+    else
+      render json: { errors: product.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
 
+  private
   def product_params
     params.require(:product).permit(:name, :brand, :price)
   end
 end
+
+
